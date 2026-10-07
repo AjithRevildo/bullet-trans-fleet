@@ -1,34 +1,28 @@
-import { z } from 'zod';
+import { Badge, Card, Table, TableCell, TableRow } from '../ui';
 
-export const fleetOverviewSchema = z.object({
-  totalVehicles: z.number(),
-  onlineVehicles: z.number(),
-  moving: z.number(),
-  idle: z.number(),
-  maintenance: z.number(),
-  offline: z.number(),
-});
+interface AuditViewProps {
+  auditRecords: Array<{ id: string; actor: string; action: string; entity: string; time: string; impact: string }>;
+}
 
-export const fleetVehicleSchema = z.object({
-  id: z.string(),
-  vehicleNumber: z.string(),
-  registrationNumber: z.string(),
-  status: z.string(),
-  vehicleType: z.string(),
-  make: z.string(),
-  model: z.string(),
-  branchId: z.string().nullable(),
-  gpsProvider: z.string(),
-  ownership: z.string(),
-  lastUpdated: z.string(),
-});
-
-export const apiEnvelopeSchema = <T extends z.ZodTypeAny>(dataSchema: T) =>
-  z.object({
-    success: z.boolean(),
-    message: z.string(),
-    data: dataSchema,
-  });
-
-export type FleetOverview = z.infer<typeof fleetOverviewSchema>;
-export type FleetVehicle = z.infer<typeof fleetVehicleSchema>;
+export function AuditView({ auditRecords }: AuditViewProps) {
+  return (
+    <Card>
+      <h2 className="text-xl font-semibold text-white">Audit log</h2>
+      <div className="mt-5 overflow-x-auto">
+        <Table columns={['Actor', 'Action', 'Entity', 'Time', 'Impact']}>
+          {auditRecords.map((entry) => (
+            <TableRow key={entry.id}>
+              <TableCell>{entry.actor}</TableCell>
+              <TableCell>{entry.action}</TableCell>
+              <TableCell>{entry.entity}</TableCell>
+              <TableCell>{entry.time}</TableCell>
+              <TableCell>
+                <Badge status={entry.impact}>{entry.impact}</Badge>
+              </TableCell>
+            </TableRow>
+          ))}
+        </Table>
+      </div>
+    </Card>
+  );
+}
