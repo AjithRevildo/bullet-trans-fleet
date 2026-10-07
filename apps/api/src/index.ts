@@ -1,6 +1,7 @@
 import express from 'express';
 import { errorHandler } from './middleware/errorHandler.js';
 import authRoutes from './routes/auth.routes.js';
+import fleetRoutes from './routes/fleet.routes.js';
 import { connectDatabase } from './config/database.js';
 import { connectRedis } from './config/redis.js';
 
@@ -34,6 +35,7 @@ app.get('/api/v1', (_req, res) => {
 });
 
 app.use('/api/v1/auth', authRoutes);
+app.use('/api/v1/fleet', fleetRoutes);
 app.use(errorHandler);
 
 const startServer = async () => {
