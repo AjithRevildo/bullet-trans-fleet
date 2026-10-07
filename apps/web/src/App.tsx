@@ -3,17 +3,18 @@ import { clearSession, createDemoSession, DEMO_EMAIL, DEMO_PASSWORD, readSession
 import { fallbackOverview, fallbackVehicles } from './lib/fleet';
 import {
   alertRecords,
+  analyticsRecords,
+  auditRecords,
   branchRecords,
+  complianceRecords,
   dispatchQueue,
+  documentRecords,
   driverRecords,
   geofenceZones,
   maintenanceRecords,
   tripRecords,
-  complianceRecords,
   type BranchRecord,
   type DriverRecord,
-  type FleetVehicleRecord,
-  type TripRecord,
 } from './data/fleetModules';
 
 const overviewCards = [
@@ -36,9 +37,28 @@ const statusStyles: Record<string, string> = {
   ALERT: 'bg-rose-500/15 text-rose-300 border-rose-500/30',
   WARNING: 'bg-amber-500/15 text-amber-300 border-amber-500/30',
   OK: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30',
+  APPROVED: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30',
+  PENDING: 'bg-amber-500/15 text-amber-300 border-amber-500/30',
+  ARCHIVED: 'bg-slate-500/15 text-slate-300 border-slate-500/30',
+  REVIEW: 'bg-cyan-500/15 text-cyan-300 border-cyan-500/30',
+  LOW: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30',
+  MEDIUM: 'bg-amber-500/15 text-amber-300 border-amber-500/30',
+  HIGH: 'bg-rose-500/15 text-rose-300 border-rose-500/30',
+  CRITICAL: 'bg-rose-500/15 text-rose-300 border-rose-500/30',
 };
 
-type View = 'dashboard' | 'vehicles' | 'trips' | 'drivers' | 'branches' | 'alerts' | 'maintenance' | 'compliance';
+type View =
+  | 'dashboard'
+  | 'vehicles'
+  | 'trips'
+  | 'drivers'
+  | 'branches'
+  | 'alerts'
+  | 'maintenance'
+  | 'compliance'
+  | 'analytics'
+  | 'documents'
+  | 'audit';
 
 const App = () => {
   const [session, setSession] = useState(() => readSession());
@@ -87,9 +107,7 @@ const App = () => {
 
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
-              <label htmlFor="email" className="mb-2 block text-sm text-slate-300">
-                Email
-              </label>
+              <label htmlFor="email" className="mb-2 block text-sm text-slate-300">Email</label>
               <input
                 id="email"
                 type="email"
@@ -101,9 +119,7 @@ const App = () => {
             </div>
 
             <div>
-              <label htmlFor="password" className="mb-2 block text-sm text-slate-300">
-                Password
-              </label>
+              <label htmlFor="password" className="mb-2 block text-sm text-slate-300">Password</label>
               <input
                 id="password"
                 type="password"
@@ -147,6 +163,9 @@ const App = () => {
     { key: 'alerts', label: 'Alerts' },
     { key: 'maintenance', label: 'Maintenance' },
     { key: 'compliance', label: 'Compliance' },
+    { key: 'analytics', label: 'Analytics' },
+    { key: 'documents', label: 'Documents' },
+    { key: 'audit', label: 'Audit Log' },
   ];
 
   return (
@@ -619,6 +638,126 @@ const App = () => {
                       </span>
                     </div>
                   ))}
+                </div>
+              </div>
+            )}
+
+            {activeView === 'analytics' && (
+              <>
+                <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                  {analyticsRecords.map((item) => (
+                    <article key={item.id} className="rounded-2xl border border-slate-800 bg-slate-900 p-5">
+                      <p className="text-sm text-slate-400">{item.label}</p>
+                      <p className="mt-4 text-3xl font-bold text-white">{item.value}</p>
+                      <div className="mt-4 flex items-center justify-between text-xs text-slate-400">
+                        <span>{item.change}</span>
+                        <span className={`rounded-full border px-2 py-1 ${statusStyles[item.trend] ?? 'border-slate-600 bg-slate-800 text-slate-300'}`}>
+                          {item.trend}
+                        </span>
+                      </div>
+                    </article>
+                  ))}
+                </section>
+
+                <section className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
+                  <div className="rounded-2xl border border-slate-800 bg-slate-900 p-5">
+                    <h2 className="text-xl font-semibold text-white">Route performance</h2>
+                    <div className="mt-5 space-y-4">
+                      {[
+                        { route: 'Bengaluru › Mysuru', rate: 92 },
+                        { route: 'Hubli › Mangalore', rate: 85 },
+                        { route: 'Coimbatore › Salem', rate: 89 },
+                        { route: 'Chennai › Trichy', rate: 94 },
+                      ].map((item) => (
+                        <div key={item.route}>
+                          <div className="mb-2 flex items-center justify-between text-sm text-slate-300">
+                            <span>{item.route}</span>
+                            <span>{item.rate}%</span>
+                          </div>
+                          <div className="h-2.5 overflow-hidden rounded-full bg-slate-800">
+                            <div className="h-full rounded-full bg-gradient-to-r from-cyan-500 to-emerald-400" style={{ width: `${item.rate}%` }} />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="rounded-2xl border border-slate-800 bg-slate-900 p-5">
+                    <h2 className="text-xl font-semibold text-white">Operational reports</h2>
+                    <div className="mt-5 space-y-3">
+                      {[
+                        'Daily fuel efficiency report',
+                        'Driver attendance compliance',
+                        'Vehicle uptime summary',
+                        'Route optimization review',
+                      ].map((report) => (
+                        <div key={report} className="rounded-xl border border-slate-800 bg-slate-950/60 px-3 py-2.5 text-sm text-slate-300">
+                          {report}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </section>
+              </>
+            )}
+
+            {activeView === 'documents' && (
+              <div className="rounded-2xl border border-slate-800 bg-slate-900 p-5">
+                <div className="mb-4 flex items-center justify-between">
+                  <h2 className="text-xl font-semibold text-white">Document archive</h2>
+                  <span className="text-sm text-slate-400">{documentRecords.length} files</span>
+                </div>
+
+                <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                  {documentRecords.map((doc) => (
+                    <div key={doc.id} className="rounded-2xl border border-slate-800 bg-slate-950/60 p-4">
+                      <div className="flex items-center justify-between gap-3">
+                        <p className="text-lg font-semibold text-white">{doc.name}</p>
+                        <span className={`rounded-full border px-2 py-1 text-[10px] ${statusStyles[doc.status] ?? 'border-slate-600 bg-slate-800 text-slate-300'}`}>
+                          {doc.status}
+                        </span>
+                      </div>
+                      <p className="mt-3 text-xs uppercase tracking-[0.2em] text-cyan-400">{doc.category}</p>
+                      <div className="mt-4 space-y-2 text-sm text-slate-300">
+                        <div className="flex justify-between"><span>Owner</span><span>{doc.owner}</span></div>
+                        <div className="flex justify-between"><span>Updated</span><span>{doc.updatedAt}</span></div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {activeView === 'audit' && (
+              <div className="rounded-2xl border border-slate-800 bg-slate-900 p-5">
+                <h2 className="text-xl font-semibold text-white">Audit log</h2>
+                <div className="mt-5 overflow-x-auto">
+                  <table className="min-w-full table-auto text-left text-sm">
+                    <thead>
+                      <tr className="border-b border-slate-800 text-slate-400">
+                        <th className="pb-3 pr-4 font-medium">Actor</th>
+                        <th className="pb-3 pr-4 font-medium">Action</th>
+                        <th className="pb-3 pr-4 font-medium">Entity</th>
+                        <th className="pb-3 pr-4 font-medium">Time</th>
+                        <th className="pb-3 pr-4 font-medium">Impact</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {auditRecords.map((entry) => (
+                        <tr key={entry.id} className="border-b border-slate-800/80 text-slate-200">
+                          <td className="py-3 pr-4">{entry.actor}</td>
+                          <td className="py-3 pr-4">{entry.action}</td>
+                          <td className="py-3 pr-4">{entry.entity}</td>
+                          <td className="py-3 pr-4">{entry.time}</td>
+                          <td className="py-3 pr-4">
+                            <span className={`rounded-full border px-2 py-1 text-[10px] ${statusStyles[entry.impact] ?? 'border-slate-600 bg-slate-800 text-slate-300'}`}>
+                              {entry.impact}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
               </div>
             )}

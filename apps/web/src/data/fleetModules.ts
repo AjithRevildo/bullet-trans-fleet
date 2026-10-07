@@ -66,6 +66,32 @@ export type ComplianceRecord = {
   status: 'OK' | 'WARNING' | 'ALERT';
 };
 
+export type AnalyticsRecord = {
+  id: string;
+  label: string;
+  value: string;
+  change: string;
+  trend: 'LOW' | 'MEDIUM' | 'HIGH';
+};
+
+export type DocumentRecord = {
+  id: string;
+  name: string;
+  category: string;
+  owner: string;
+  updatedAt: string;
+  status: 'APPROVED' | 'PENDING' | 'ARCHIVED' | 'REVIEW';
+};
+
+export type AuditRecord = {
+  id: string;
+  actor: string;
+  action: string;
+  entity: string;
+  time: string;
+  impact: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+};
+
 export const dispatchQueue = [
   { id: 'DISP-101', route: 'Bengaluru -> Mysuru', vehicle: 'BT-0001', status: 'ACTIVE', eta: '2h 15m' },
   { id: 'DISP-102', route: 'Hubli -> Mangalore', vehicle: 'BT-0042', status: 'ON_ROUTE', eta: '3h 40m' },
@@ -80,12 +106,12 @@ export const geofenceZones = [
   { id: 'ZONE-04', name: 'Warehouse Route', region: 'Coimbatore', status: 'OK' },
 ];
 
-export const tripRecords: TripRecord[] = [
+export const tripRecords = [
   { id: 'TRIP-1001', route: 'Bengaluru -> Mysuru', vehicle: 'BT-0001', driver: 'Arun Kumar', status: 'ON_ROUTE', eta: '2h 15m', distance: '145 km' },
   { id: 'TRIP-1002', route: 'Hubli -> Mangalore', vehicle: 'BT-0042', driver: 'Suresh Rao', status: 'DELAYED', eta: '3h 40m', distance: '246 km' },
   { id: 'TRIP-1003', route: 'Coimbatore -> Salem', vehicle: 'BT-0137', driver: 'Vignesh P', status: 'ACTIVE', eta: '1h 10m', distance: '85 km' },
   { id: 'TRIP-1004', route: 'Chennai -> Trichy', vehicle: 'BT-0088', driver: 'Naveen M', status: 'COMPLETED', eta: 'Completed', distance: '318 km' },
-];
+] satisfies TripRecord[];
 
 export const driverRecords: DriverRecord[] = [
   { id: 'DRV-01', name: 'Arun Kumar', phone: '+91 99300 11221', vehicle: 'BT-0001', status: 'ON_ROUTE', shift: '06:00 - 14:00', branch: 'Bengaluru HQ' },
@@ -119,4 +145,25 @@ export const complianceRecords: ComplianceRecord[] = [
   { id: 'C-01', name: 'Insurance renewals', detail: 'All branches current', status: 'OK' },
   { id: 'C-02', name: 'Driver permits', detail: '2 permits expiring in 12 days', status: 'WARNING' },
   { id: 'C-03', name: 'Vehicle inspections', detail: '3 vehicles require priority review', status: 'ALERT' },
+];
+
+export const analyticsRecords: AnalyticsRecord[] = [
+  { id: 'A-01', label: 'On-time delivery', value: '94.2%', change: '+3.4% from last week', trend: 'HIGH' },
+  { id: 'A-02', label: 'Fuel efficiency', value: '18.7 km/l', change: '+1.2% vs target', trend: 'MEDIUM' },
+  { id: 'A-03', label: 'Idle time', value: '6.8%', change: '-1.1% improvement', trend: 'LOW' },
+  { id: 'A-04', label: 'Dispatch SLA', value: '97.9%', change: '+2.1% uplift', trend: 'HIGH' },
+];
+
+export const documentRecords: DocumentRecord[] = [
+  { id: 'DOC-01', name: 'Route permit pack', category: 'Compliance', owner: 'Ops Team', updatedAt: '2 hours ago', status: 'APPROVED' },
+  { id: 'DOC-02', name: 'Insurance binder', category: 'Finance', owner: 'Accounts', updatedAt: 'Yesterday', status: 'PENDING' },
+  { id: 'DOC-03', name: 'Vehicle registration logs', category: 'Asset Control', owner: 'Fleet Admin', updatedAt: '3 days ago', status: 'ARCHIVED' },
+  { id: 'DOC-04', name: 'Driver training checklist', category: 'Safety', owner: 'HSE Manager', updatedAt: '5 days ago', status: 'REVIEW' },
+];
+
+export const auditRecords: AuditRecord[] = [
+  { id: 'AUD-01', actor: 'Amelia West', action: 'Updated route priority', entity: 'TRIP-1002', time: '09:14 AM', impact: 'HIGH' },
+  { id: 'AUD-02', actor: 'Fleet Ops Bot', action: 'Auto-generated alert', entity: 'BT-0042', time: '08:52 AM', impact: 'MEDIUM' },
+  { id: 'AUD-03', actor: 'Rahul Menon', action: 'Approved permit file', entity: 'Route permit pack', time: '08:23 AM', impact: 'LOW' },
+  { id: 'AUD-04', actor: 'Nina Saldanha', action: 'Marked vehicle for maintenance', entity: 'BT-0091', time: '07:46 AM', impact: 'CRITICAL' },
 ];
