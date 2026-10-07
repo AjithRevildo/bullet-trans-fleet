@@ -23,17 +23,12 @@ export const fleetVehicleSchema = z.object({
   lastUpdated: z.string(),
 });
 
-export const fleetOverviewResponseSchema = z.object({
-  success: z.literal(true),
-  message: z.string(),
-  data: fleetOverviewSchema,
-});
-
-export const fleetVehiclesResponseSchema = z.object({
-  success: z.literal(true),
-  message: z.string(),
-  data: z.array(fleetVehicleSchema),
-});
+export const apiEnvelopeSchema = <T extends z.ZodTypeAny>(dataSchema: T) =>
+  z.object({
+    success: z.boolean(),
+    message: z.string(),
+    data: dataSchema,
+  });
 
 export type FleetOverview = z.infer<typeof fleetOverviewSchema>;
 export type FleetVehicle = z.infer<typeof fleetVehicleSchema>;
