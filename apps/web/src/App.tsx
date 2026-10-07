@@ -2,10 +2,14 @@ import { useMemo, useState } from 'react';
 import { clearSession, createDemoSession, DEMO_EMAIL, DEMO_PASSWORD, readSession, saveSession } from './lib/auth';
 import { fallbackOverview, fallbackVehicles } from './lib/fleet';
 import {
+  alertRecords,
   branchRecords,
   dispatchQueue,
   driverRecords,
+  geofenceZones,
+  maintenanceRecords,
   tripRecords,
+  complianceRecords,
   type BranchRecord,
   type DriverRecord,
   type FleetVehicleRecord,
@@ -29,9 +33,12 @@ const statusStyles: Record<string, string> = {
   ON_ROUTE: 'bg-violet-500/15 text-violet-300 border-violet-500/30',
   DELAYED: 'bg-amber-500/15 text-amber-300 border-amber-500/30',
   COMPLETED: 'bg-slate-500/15 text-slate-300 border-slate-500/30',
+  ALERT: 'bg-rose-500/15 text-rose-300 border-rose-500/30',
+  WARNING: 'bg-amber-500/15 text-amber-300 border-amber-500/30',
+  OK: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30',
 };
 
-type View = 'dashboard' | 'vehicles' | 'trips' | 'drivers' | 'branches';
+type View = 'dashboard' | 'vehicles' | 'trips' | 'drivers' | 'branches' | 'alerts' | 'maintenance' | 'compliance';
 
 const App = () => {
   const [session, setSession] = useState(() => readSession());
@@ -137,11 +144,14 @@ const App = () => {
     { key: 'trips', label: 'Trips' },
     { key: 'drivers', label: 'Drivers' },
     { key: 'branches', label: 'Branches' },
+    { key: 'alerts', label: 'Alerts' },
+    { key: 'maintenance', label: 'Maintenance' },
+    { key: 'compliance', label: 'Compliance' },
   ];
 
   return (
     <main className="min-h-screen bg-slate-950 text-slate-100">
-      <div className="mx-auto max-w-[1500px] px-4 py-6 lg:px-6">
+      <div className="mx-auto max-w-[1600px] px-4 py-6 lg:px-6">
         <header className="mb-6 rounded-3xl border border-slate-800 bg-slate-900/80 p-5 shadow-2xl shadow-slate-950/40">
           <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
             <div>
@@ -199,7 +209,7 @@ const App = () => {
                   ))}
                 </section>
 
-                <section className="grid gap-6 lg:grid-cols-[1.5fr_0.9fr]">
+                <section className="grid gap-6 lg:grid-cols-[1.55fr_0.95fr]">
                   <div className="rounded-2xl border border-slate-800 bg-slate-900 p-5">
                     <div className="mb-5 flex items-center justify-between">
                       <h2 className="text-xl font-semibold text-white">Fleet live map</h2>
@@ -208,7 +218,7 @@ const App = () => {
                       </span>
                     </div>
 
-                    <div className="relative h-[310px] overflow-hidden rounded-2xl border border-slate-800 bg-[radial-gradient(circle_at_top,_rgba(34,211,238,0.14),_transparent_30%),linear-gradient(135deg,#020617,#0f172a_35%,#111827)]">
+                    <div className="relative h-[320px] overflow-hidden rounded-2xl border border-slate-800 bg-[radial-gradient(circle_at_top,_rgba(34,211,238,0.14),_transparent_30%),linear-gradient(135deg,#020617,#0f172a_35%,#111827)]">
                       {fallbackVehicles.slice(0, 8).map((vehicle, index) => {
                         const left = 12 + (index * 13) % 68;
                         const top = 18 + (index * 17) % 60;
@@ -259,26 +269,50 @@ const App = () => {
                   </div>
                 </section>
 
-                <section className="rounded-2xl border border-slate-800 bg-slate-900 p-5">
-                  <div className="mb-4 flex items-center justify-between">
-                    <h2 className="text-xl font-semibold text-white">Dispatch queue</h2>
-                    <span className="text-sm text-slate-400">{dispatchQueue.length} active items</span>
+                <section className="grid gap-6 xl:grid-cols-2">
+                  <div className="rounded-2xl border border-slate-800 bg-slate-900 p-5">
+                    <div className="mb-4 flex items-center justify-between">
+                      <h2 className="text-xl font-semibold text-white">Dispatch queue</h2>
+                      <span className="text-sm text-slate-400">{dispatchQueue.length} active items</span>
+                    </div>
+
+                    <div className="space-y-3">
+                      {dispatchQueue.map((item) => (
+                        <div key={item.id} className="rounded-2xl border border-slate-800 bg-slate-950/60 p-4">
+                          <p className="text-xs uppercase tracking-[0.2em] text-slate-400">{item.id}</p>
+                          <h3 className="mt-3 text-lg font-semibold text-white">{item.route}</h3>
+                          <p className="mt-2 text-sm text-slate-300">{item.vehicle}</p>
+                          <div className="mt-4 flex items-center justify-between">
+                            <span className={`rounded-full border px-2 py-1 text-xs ${statusStyles[item.status] ?? 'border-slate-600 bg-slate-800 text-slate-300'}`}>
+                              {item.status}
+                            </span>
+                            <span className="text-xs text-slate-400">ETA {item.eta}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
 
-                  <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-                    {dispatchQueue.map((item) => (
-                      <div key={item.id} className="rounded-2xl border border-slate-800 bg-slate-950/60 p-4">
-                        <p className="text-xs uppercase tracking-[0.2em] text-slate-400">{item.id}</p>
-                        <h3 className="mt-3 text-lg font-semibold text-white">{item.route}</h3>
-                        <p className="mt-2 text-sm text-slate-300">{item.vehicle}</p>
-                        <div className="mt-4 flex items-center justify-between">
-                          <span className={`rounded-full border px-2 py-1 text-xs ${statusStyles[item.status] ?? 'border-slate-600 bg-slate-800 text-slate-300'}`}>
-                            {item.status}
-                          </span>
-                          <span className="text-xs text-slate-400">ETA {item.eta}</span>
+                  <div className="rounded-2xl border border-slate-800 bg-slate-900 p-5">
+                    <div className="mb-4 flex items-center justify-between">
+                      <h2 className="text-xl font-semibold text-white">Geofence zones</h2>
+                      <span className="text-sm text-slate-400">{geofenceZones.length} active</span>
+                    </div>
+                    <div className="space-y-3">
+                      {geofenceZones.map((zone) => (
+                        <div key={zone.id} className="rounded-xl border border-slate-800 bg-slate-950/60 p-3">
+                          <div className="flex items-center justify-between gap-4">
+                            <div>
+                              <div className="font-medium text-white">{zone.name}</div>
+                              <div className="text-xs text-slate-400">{zone.region}</div>
+                            </div>
+                            <span className={`rounded-full border px-2 py-1 text-[10px] ${statusStyles[zone.status] ?? 'border-slate-600 bg-slate-800 text-slate-300'}`}>
+                              {zone.status}
+                            </span>
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
                   </div>
                 </section>
               </>
@@ -488,6 +522,104 @@ const App = () => {
                     </div>
                   </div>
                 ))}
+              </div>
+            )}
+
+            {activeView === 'alerts' && (
+              <div className="grid gap-6 xl:grid-cols-2">
+                <div className="rounded-2xl border border-slate-800 bg-slate-900 p-5">
+                  <h2 className="text-xl font-semibold text-white">Operational alerts</h2>
+                  <div className="mt-4 space-y-3">
+                    {alertRecords.map((alert) => (
+                      <div key={alert.id} className="rounded-xl border border-slate-800 bg-slate-950/60 p-4">
+                        <div className="flex items-center justify-between gap-4">
+                          <div>
+                            <div className="font-medium text-white">{alert.title}</div>
+                            <div className="mt-1 text-xs text-slate-400">{alert.vehicle}</div>
+                          </div>
+                          <span className={`rounded-full border px-2 py-1 text-[10px] ${statusStyles[alert.level] ?? 'border-slate-600 bg-slate-800 text-slate-300'}`}>
+                            {alert.level}
+                          </span>
+                        </div>
+                        <p className="mt-3 text-sm text-slate-300">{alert.description}</p>
+                        <div className="mt-3 text-xs text-slate-400">{alert.time}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="rounded-2xl border border-slate-800 bg-slate-900 p-5">
+                  <h2 className="text-xl font-semibold text-white">Zone risk matrix</h2>
+                  <div className="mt-5 space-y-3">
+                    {[{ name: 'North corridor', risk: 'Low' }, { name: 'Industrial belt', risk: 'Medium' }, { name: 'Urban core', risk: 'High' }, { name: 'Interstate route', risk: 'Medium' }].map((item) => (
+                      <div key={item.name} className="flex items-center justify-between rounded-xl border border-slate-800 bg-slate-950/60 px-3 py-2.5 text-sm">
+                        <span className="text-slate-300">{item.name}</span>
+                        <span className={`rounded-full border px-2 py-1 text-[10px] ${item.risk === 'High' ? 'border-rose-500/30 bg-rose-500/10 text-rose-300' : item.risk === 'Medium' ? 'border-amber-500/30 bg-amber-500/10 text-amber-300' : 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300'}`}>
+                          {item.risk}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {activeView === 'maintenance' && (
+              <div className="rounded-2xl border border-slate-800 bg-slate-900 p-5">
+                <div className="mb-4 flex items-center justify-between">
+                  <h2 className="text-xl font-semibold text-white">Maintenance scheduler</h2>
+                  <span className="text-sm text-slate-400">{maintenanceRecords.length} records</span>
+                </div>
+
+                <div className="overflow-x-auto">
+                  <table className="min-w-full table-auto text-left text-sm">
+                    <thead>
+                      <tr className="border-b border-slate-800 text-slate-400">
+                        <th className="pb-3 pr-4 font-medium">Vehicle</th>
+                        <th className="pb-3 pr-4 font-medium">Service</th>
+                        <th className="pb-3 pr-4 font-medium">Due date</th>
+                        <th className="pb-3 pr-4 font-medium">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {maintenanceRecords.map((record) => (
+                        <tr key={record.id} className="border-b border-slate-800/80 text-slate-200">
+                          <td className="py-3 pr-4">{record.vehicle}</td>
+                          <td className="py-3 pr-4">{record.service}</td>
+                          <td className="py-3 pr-4">{record.date}</td>
+                          <td className="py-3 pr-4">
+                            <span className={`rounded-full border px-2 py-1 text-[10px] ${statusStyles[record.status] ?? 'border-slate-600 bg-slate-800 text-slate-300'}`}>
+                              {record.status}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
+            {activeView === 'compliance' && (
+              <div className="rounded-2xl border border-slate-800 bg-slate-900 p-5">
+                <div className="mb-4 flex items-center justify-between">
+                  <h2 className="text-xl font-semibold text-white">Compliance tracker</h2>
+                  <span className="text-sm text-slate-400">{complianceRecords.length} statuses</span>
+                </div>
+
+                <div className="space-y-3">
+                  {complianceRecords.map((record) => (
+                    <div key={record.id} className="flex items-center justify-between rounded-xl border border-slate-800 bg-slate-950/60 p-3">
+                      <div>
+                        <div className="font-medium text-white">{record.name}</div>
+                        <div className="text-xs text-slate-400">{record.detail}</div>
+                      </div>
+                      <span className={`rounded-full border px-2 py-1 text-[10px] ${statusStyles[record.status] ?? 'border-slate-600 bg-slate-800 text-slate-300'}`}>
+                        {record.status}
+                      </span>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
           </section>

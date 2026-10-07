@@ -42,11 +42,42 @@ export type BranchRecord = {
   operating: string;
 };
 
+export type AlertRecord = {
+  id: string;
+  title: string;
+  vehicle: string;
+  level: 'ALERT' | 'WARNING' | 'OK';
+  description: string;
+  time: string;
+};
+
+export type MaintenanceRecord = {
+  id: string;
+  vehicle: string;
+  service: string;
+  date: string;
+  status: 'ACTIVE' | 'WARNING' | 'OK';
+};
+
+export type ComplianceRecord = {
+  id: string;
+  name: string;
+  detail: string;
+  status: 'OK' | 'WARNING' | 'ALERT';
+};
+
 export const dispatchQueue = [
   { id: 'DISP-101', route: 'Bengaluru -> Mysuru', vehicle: 'BT-0001', status: 'ACTIVE', eta: '2h 15m' },
   { id: 'DISP-102', route: 'Hubli -> Mangalore', vehicle: 'BT-0042', status: 'ON_ROUTE', eta: '3h 40m' },
   { id: 'DISP-103', route: 'Coimbatore -> Salem', vehicle: 'BT-0137', status: 'DELAYED', eta: '5h 10m' },
   { id: 'DISP-104', route: 'Chennai -> Trichy', vehicle: 'BT-0088', status: 'ACTIVE', eta: '1h 55m' },
+];
+
+export const geofenceZones = [
+  { id: 'ZONE-01', name: 'Whitefield Gate', region: 'Bengaluru East', status: 'OK' },
+  { id: 'ZONE-02', name: 'Industrial Belt', region: 'Hubli', status: 'WARNING' },
+  { id: 'ZONE-03', name: 'Urban Core', region: 'Chennai', status: 'ALERT' },
+  { id: 'ZONE-04', name: 'Warehouse Route', region: 'Coimbatore', status: 'OK' },
 ];
 
 export const tripRecords: TripRecord[] = [
@@ -68,4 +99,24 @@ export const branchRecords: BranchRecord[] = [
   { id: 'BR-02', name: 'Hubli Depot', code: 'HBL-DEP', location: 'Gokul Road, Hubli', vehicles: 31, drivers: 14, operating: '18x7' },
   { id: 'BR-03', name: 'Coimbatore Hub', code: 'CBE-HUB', location: 'Perur, Coimbatore', vehicles: 27, drivers: 12, operating: '16x7' },
   { id: 'BR-04', name: 'Chennai South', code: 'CHE-S', location: 'Tambaram, Chennai', vehicles: 35, drivers: 16, operating: '24x7' },
+];
+
+export const alertRecords: AlertRecord[] = [
+  { id: 'ALERT-01', title: 'Fuel anomaly', vehicle: 'BT-0042', level: 'WARNING', description: 'Unexpected fuel drop detected in the last 90 minutes.', time: '8 mins ago' },
+  { id: 'ALERT-02', title: 'Hard brake event', vehicle: 'BT-0088', level: 'ALERT', description: 'High-impact brake pattern near urban corridor.', time: '14 mins ago' },
+  { id: 'ALERT-03', title: 'Tire pressure warning', vehicle: 'BT-0137', level: 'WARNING', description: 'Rear tire pressure below threshold.', time: '26 mins ago' },
+  { id: 'ALERT-04', title: 'Route deviation', vehicle: 'BT-0001', level: 'ALERT', description: 'Vehicle exited approved corridor near Mysuru ring road.', time: '38 mins ago' },
+];
+
+export const maintenanceRecords: MaintenanceRecord[] = [
+  { id: 'M-101', vehicle: 'BT-0091', service: 'Oil change', date: 'Today', status: 'WARNING' },
+  { id: 'M-102', vehicle: 'BT-0220', service: 'Brake inspection', date: 'Tomorrow', status: 'ACTIVE' },
+  { id: 'M-103', vehicle: 'BT-0156', service: 'Tire rotation', date: 'Thu 12 Sep', status: 'OK' },
+  { id: 'M-104', vehicle: 'BT-0034', service: 'Battery test', date: 'Fri 13 Sep', status: 'WARNING' },
+];
+
+export const complianceRecords: ComplianceRecord[] = [
+  { id: 'C-01', name: 'Insurance renewals', detail: 'All branches current', status: 'OK' },
+  { id: 'C-02', name: 'Driver permits', detail: '2 permits expiring in 12 days', status: 'WARNING' },
+  { id: 'C-03', name: 'Vehicle inspections', detail: '3 vehicles require priority review', status: 'ALERT' },
 ];
