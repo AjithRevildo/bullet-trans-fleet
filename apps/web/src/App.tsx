@@ -1,5 +1,7 @@
+import { useEffect, useState, type FormEvent } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { fetchFleetOverview, fetchFleetVehicles, fallbackOverview, fallbackVehicles } from './lib/fleet';
+import { DEMO_EMAIL, DEMO_PASSWORD, clearSession, createDemoSession, readSession, saveSession } from './lib/auth';
 
 const statusStyles: Record<string, string> = {
   MOVING: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30',
@@ -16,11 +18,22 @@ const overviewCards = [
 ] as const;
 
 const App = () => {
+  const [session, setSession] = useState(() => readSession());
+  const [credentials, setCredentials] = useState({ email: DEMO_EMAIL, password: DEMO_PASSWORD });
+  const [loginError, setLoginError] = useState('');
+
+  useEffect(() => {
+    if (session) {
+      saveSession(session);
+    }
+  }, [session]);
+
   const overviewQuery = useQuery({
     queryKey: ['fleetOverview'],
     queryFn: fetchFleetOverview,
     staleTime: 30_000,
     retry: 1,
+    enabled: Boolean(session),
   });
 
   const vehiclesQuery = useQuery({
@@ -28,12 +41,92 @@ const App = () => {
     queryFn: fetchFleetVehicles,
     staleTime: 30_000,
     retry: 1,
+    enabled: Boolean(session),
   });
 
   const overview = overviewQuery.data ?? fallbackOverview;
   const vehicles = vehiclesQuery.data ?? fallbackVehicles;
-
   const isDemoMode = overviewQuery.isError || vehiclesQuery.isError || !overviewQuery.data || !vehiclesQuery.data;
+
+  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const nextSession = createDemoSession(credentials.email, credentials.password);
+
+    if (!nextSession) {
+      setLoginError('Use the demo Fleet Manager credentials to continue.');
+      return;
+    }
+
+    setSession(nextSession);
+    setLoginError('');
+  };
+
+  const handleLogout = () => {
+    clearSession();
+    setSession(null);
+  };
+
+  if (!session) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-slate-950 px-6 py-12 text-slate-100">
+        <div className="w-full max-w-md rounded-3xl border border-slate-800 bg-slate-900/80 p-8 shadow-2xl shadow-slate-950/50">
+          <div className="mb-8 text-center">
+            <p className="text-xs font-semibold uppercase tracking-[0.28em] text-cyan-400">Bullet Trans</p>
+            <h1 className="mt-3 text-3xl font-bold text-white">Fleet Command Center</h1>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-5">
+            <div>
+              <label htmlFor="email" className="mb-2 block text-sm text-slate-300">
+                Email
+              </label>
+              <input
+                id="email"
+                type="email"
+                value={credentials.email}
+                onChange={(event) => setCredentials((current) => ({ ...current, email: event.target.value }))}
+                className="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2.5 text-slate-100 outline-none ring-0 transition focus:border-cyan-500"
+                placeholder="ops@bullettrans.example"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="password" className="mb-2 block text-sm text-slate-300">
+                Password
+              </label>
+              <input
+                id="password"
+                type="password"
+                value={credentials.password}
+                onChange={(event) => setCredentials((current) => ({ ...current, password: event.target.value }))}
+                className="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2.5 text-slate-100 outline-none transition focus:border-cyan-500"
+                placeholder="********"
+              />
+            </div>
+
+            {loginError ? (
+              <div className="rounded-xl border border-rose-500/30 bg-rose-500/10 px-3 py-2 text-sm text-rose-300">
+                {loginError}
+              </div>
+            ) : null}
+
+            <button
+              type="submit"
+              className="w-full rounded-xl bg-cyan-500 px-4 py-3 font-semibold text-slate-950 transition hover:bg-cyan-400"
+            >
+              Sign in
+            </button>
+          </form>
+
+          <div className="mt-6 rounded-xl border border-slate-700 bg-slate-950/60 p-4 text-sm text-slate-300">
+            <p className="font-medium text-white">Demo credentials</p>
+            <p className="mt-2">Email: {DEMO_EMAIL}</p>
+            <p>Password: {DEMO_PASSWORD}</p>
+          </div>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className="min-h-screen bg-slate-950 text-slate-100">
@@ -44,10 +137,25 @@ const App = () => {
               <p className="text-xs font-semibold uppercase tracking-[0.28em] text-cyan-400">Bullet Trans</p>
               <h1 className="mt-3 text-3xl font-bold text-white md:text-5xl">Fleet Command Center</h1>
             </div>
-            <div className="flex items-center gap-3 rounded-full border border-slate-700 bg-slate-900/80 px-4 py-2 text-sm text-slate-300">
-              <span className={`inline-block h-2.5 w-2.5 rounded-full ${isDemoMode ? 'bg-amber-400' : 'bg-emerald-400'}`} />
-              {isDemoMode ? 'Demo mode active' : 'Live fleet sync'}
+            <div className="flex items-center gap-3">
+              <div className="rounded-full border border-slate-700 bg-slate-900/80 px-4 py-2 text-sm text-slate-300">
+                <span className={`inline-block h-2.5 w-2.5 rounded-full ${isDemoMode ? 'bg-amber-400' : 'bg-emerald-400'}`} />
+                <span className="ml-2">{isDemoMode ? 'Demo mode active' : 'Live fleet sync'}</span>
+              </div>
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="rounded-full border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-200 hover:border-slate-500"
+              >
+                Logout
+              </button>
             </div>
+          </div>
+          <div className="mt-5 flex items-center justify-between border-t border-slate-800 pt-4 text-sm text-slate-300">
+            <span>Signed in as {session.email}</span>
+            <span className="rounded-full border border-cyan-500/30 bg-cyan-500/10 px-2 py-1 text-cyan-300">
+              {session.role}
+            </span>
           </div>
         </header>
 
