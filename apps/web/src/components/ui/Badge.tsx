@@ -1,20 +1,41 @@
-import { StatusType, getStatusStyle } from '../../lib/styles';
+export type DemoSession = {
+  email: string;
+  role: string;
+  token: string;
+};
 
-interface BadgeProps {
-  status: StatusType | string;
-  children: React.ReactNode;
-  className?: string;
-}
+export const readSession = (): DemoSession | null => {
+  try {
+    const raw = localStorage.getItem('bt_session');
+    if (!raw) return null;
+    return JSON.parse(raw) as DemoSession;
+  } catch {
+    return null;
+  }
+};
 
-/**
- * Reusable status badge component
- * Uses centralized status styling
- */
-export function Badge({ status, children, className = '' }: BadgeProps) {
-  const style = getStatusStyle(status);
-  return (
-    <span className={`rounded-full border px-2 py-1 text-xs font-medium ${style.badge} ${className}`}>
-      {children}
-    </span>
-  );
-}
+export const saveSession = (session: DemoSession) => {
+  localStorage.setItem('bt_session', JSON.stringify(session));
+  localStorage.setItem('bt_token', session.token);
+};
+
+export const clearSession = () => {
+  localStorage.removeItem('bt_session');
+  localStorage.removeItem('bt_token');
+};
+
+export const createDemoSession = (email: string, password: string): DemoSession | null => {
+  if (!email || !password) return null;
+  if (!email.includes('@')) return null;
+
+  const token = btoa(`${email}:${password}`);
+
+  return {
+    email,
+    role: 'FLEET_MANAGER',
+    token,
+  };
+};
+
+export const DEMO_EMAIL = 'ops@bullettrans.example';
+export const DEMO_PASSWORD = 'Welcome123';

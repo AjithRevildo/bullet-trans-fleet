@@ -1,27 +1,44 @@
-import React from 'react';
+import type { ReactNode } from 'react';
 
-type ButtonVariant = 'primary' | 'secondary';
-
-interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: ButtonVariant;
-  children: React.ReactNode;
+interface TableProps {
+  columns: Array<{ key: string; label: string } | string>;
+  children: ReactNode;
 }
 
-const variantClasses: Record<ButtonVariant, string> = {
-  primary: 'bg-cyan-500 text-slate-950 hover:bg-cyan-400',
-  secondary: 'border border-slate-700 bg-slate-950 text-slate-200 hover:border-slate-500',
-};
-
-/**
- * Reusable button component with variants
- */
-export function Button({ variant = 'primary', className = '', children, ...props }: ButtonProps) {
-  const baseClasses = 'rounded-xl px-4 py-2 text-sm font-semibold transition';
-  const variantClass = variantClasses[variant];
+export function Table({ columns, children }: TableProps) {
+  const columnLabels = columns.map((column) => (typeof column === 'string' ? column : column.label));
 
   return (
-    <button className={`${baseClasses} ${variantClass} ${className}`} {...props}>
-      {children}
-    </button>
+    <div className="overflow-x-auto">
+      <table className="min-w-full table-auto text-left text-sm">
+        <thead>
+          <tr className="border-b border-slate-800 text-slate-400">
+            {columnLabels.map((label) => (
+              <th key={label} className="pb-3 pr-4 font-medium">
+                {label}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>{children}</tbody>
+      </table>
+    </div>
   );
+}
+
+interface TableCellProps {
+  children: ReactNode;
+  className?: string;
+}
+
+export function TableCell({ children, className = '' }: TableCellProps) {
+  return <td className={`py-3 pr-4 ${className}`}>{children}</td>;
+}
+
+interface TableRowProps {
+  children: ReactNode;
+}
+
+export function TableRow({ children }: TableRowProps) {
+  return <tr className="border-b border-slate-800/80 text-slate-200">{children}</tr>;
 }

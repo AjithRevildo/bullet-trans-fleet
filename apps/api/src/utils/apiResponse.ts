@@ -1,29 +1,29 @@
-import type { Response } from 'express';
+import type { Request, Response, NextFunction } from 'express';
 
-export interface ApiResponseMeta {
-  [key: string]: unknown;
-}
-
-export const successResponse = <T>(
-  res: Response,
-  data: T,
-  message = 'Request successful',
-  meta: ApiResponseMeta = {},
-) => {
-  return res.status(200).json({
-    success: true,
-    message,
-    data,
-    meta,
-  });
+export type ApiEnvelope<T> = {
+  success: boolean;
+  message: string;
+  data: T;
+  code?: string;
 };
 
-export const createdResponse = <T>(res: Response, data: T, message = 'Created successfully') => {
-  return res.status(201).json({
+export const isApiEnvelope = <T>(value: unknown): value is ApiEnvelope<T> => {
+  if (!value || typeof value !== 'object') {
+    return false;
+  }
+
+  const candidate = value as Record<string, unknown>;
+  return typeof candidate.success === 'boolean' && 'data' in candidate;
+};
+
+export const successResponse = <T>(res: Response, data: T, message = 'Success') => {
+  const payload: ApiEnvelope<T> = {
     success: true,
     message,
     data,
-  });
+  };
+
+  return res.status(200).json(payload);
 };
 
 export const errorResponse = (
@@ -31,12 +31,28 @@ export const errorResponse = (
   statusCode: number,
   message: string,
   code: string,
-  details?: unknown,
+) => res.status(statusCode).json({
+  success: false,
+  message,
+  code,
+  data: null,
+});
+
+export class AppError extends Error {
+  statusCode: number;
+  code: string;
+
+  constructor(statusCode: number, code: string, message: string) {
+    super(message);
+    this.statusCode = statusCode;
+    this.code = code;
+  }
+}
+
+export const asyncHandler = <T extends (req: Request, res: Response, next: NextFunction) => Promise<unknown>>(
+  handler: T,
 ) => {
-  return res.status(statusCode).json({
-    success: false,
-    message,
-    code,
-    ...(details ? { details } : {}),
-  });
+  return (req: Request, res: Response, next: NextFunction) => {
+    Promise.resolve(handler(req, res, next)).catch(next);
+  };
 };

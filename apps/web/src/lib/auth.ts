@@ -1,37 +1,57 @@
-export type DemoSession = {
-  email: string;
-  role: string;
-  token: string;
-};
+import { apiEnvelopeSchema, fleetOverviewSchema, fleetVehicleSchema } from './validators';
 
-export const DEMO_EMAIL = 'ops@bullettrans.example';
-export const DEMO_PASSWORD = 'Welcome123';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api/v1';
 
-export const readSession = (): DemoSession | null => {
-  try {
-    const raw = localStorage.getItem('bt_session');
-    if (!raw) return null;
-    return JSON.parse(raw) as DemoSession;
-  } catch {
-    return null;
+async function parseApiResponse<T>(response: Response, schema?: z.ZodType<T>): Promise<T> {
+  const payload = await response.json().catch(() => null);
+
+  if (!response.ok || !payload || payload.success === false) {
+    throw new Error(payload?.message || 'Request failed');
   }
-};
 
-export const saveSession = (session: DemoSession) => {
-  localStorage.setItem('bt_session', JSON.stringify(session));
-};
+  if (!payload || typeof payload !== 'object' || !('data' in payload)) {
+    throw new Error('Invalid API response payload');
+  }
 
-export const clearSession = () => {
-  localStorage.removeItem('bt_session');
-};
+  const data = payload.data as T;
 
-export const createDemoSession = (email: string, password: string): DemoSession | null => {
-  if (!email || !password) return null;
-  if (email.toLowerCase() !== DEMO_EMAIL || password !== DEMO_PASSWORD) return null;
+  if (schema) {
+    return schema.parse(data);
+  }
 
-  return {
-    email,
-    role: 'FLEET_MANAGER',
-    token: 'demo-token',
-  };
-};
+  return data;
+}
+
+export async function fetchFleetOverview() {
+  try {
+    const response = await fetch(`${API_BASE_URL}/fleet/overview`, {
+      headers: { Authorization: `Bearer ${localStorage.getItem('bt_token') || 'demo-token'}` },
+    });
+
+    return await parseApiResponse(
+      response,
+      apiEnvelopeSchema(fleetOverviewSchema).transform((envelope) => envelope.data),
+    );
+  } catch (error) {
+    console.error('Failed to fetch fleet overview', error);
+    const { fallbackOverview } = await import('./fleet');
+    return fallbackOverview;
+  }
+}
+
+export async function fetchFleetVehicles() {
+  try {
+    const response = await fetch(`${API_BASE_URL}/fleet/vehicles`, {
+      headers: { Authorization: `Bearer ${localStorage.getItem('bt_token') || 'demo-token'}` },
+    });
+
+    return await parseApiResponse(
+      response,
+      apiEnvelopeSchema(z.array(fleetVehicleSchema)).transform((envelope) => envelope.data),
+    );
+  } catch (error) {
+    console.error('Failed to fetch fleet vehicles', error);
+    const { fallbackVehicles } = await import('./fleet');
+    return fallbackVehicles;
+  }
+}
